@@ -30,6 +30,11 @@
 #
 # Runs <script>, capturing its stdout, stderr, and return code, then sends all
 # that info to Jenkins under a Jenkins job named <job>.
+
+USER=
+PASS=
+
+#
 if [ $# -lt 3 ]; then
     echo "Not enough args!"
     echo "Usage: $0 JENKINS_URL JENKINS_JOB_NAME SCRIPT"
@@ -63,7 +68,12 @@ echo "Elapsed ms: $ELAPSED_MS" >> $OUTFILE
 # too long' issues.
 CURLTEMP=$(mktemp -t jenkins_wrapper_curl.XXXXXXXX)
 echo "<run><log encoding=\"hexBinary\">$(hexdump -v -e '1/1 "%02x"' $OUTFILE)</log><result>${RESULT}</result><duration>${ELAPSED_MS}</duration></run>" > $CURLTEMP
-curl -X POST -d @${CURLTEMP} ${JENKINS_URL}/job/${JOB_NAME}/postBuildResult
+#
+if [ -n "${USER}" -a -n "${PASS}" ];then
+    curl -u ${USER}:${PASS} -X POST -d @${CURLTEMP} ${JENKINS_URL}/job/${JOB_NAME}/postBuildResult
+else
+    curl -X POST -d @${CURLTEMP} ${JENKINS_URL}/job/${JOB_NAME}/postBuildResult
+fi
 
 ### Clean up our temp files and we're done.
 
