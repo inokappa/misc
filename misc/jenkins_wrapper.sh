@@ -63,16 +63,21 @@ echo "End time:   $END_TIME" >> $OUTFILE
 echo "Elapsed ms: $ELAPSED_MS" >> $OUTFILE
 
 ### Post the results of the command to Jenkins.
-
 # We build up our XML payload in a temp file -- this helps avoid 'argument list
 # too long' issues.
-CURLTEMP=$(mktemp -t jenkins_wrapper_curl.XXXXXXXX)
-echo "<run><log encoding=\"hexBinary\">$(hexdump -v -e '1/1 "%02x"' $OUTFILE)</log><result>${RESULT}</result><duration>${ELAPSED_MS}</duration></run>" > $CURLTEMP
-#
-if [ -n "${USER}" -a -n "${PASS}" ];then
-    curl -u ${USER}:${PASS} -X POST -d @${CURLTEMP} ${JENKINS_URL}/job/${JOB_NAME}/postBuildResult
+
+CURLBIN=`which curl`
+if [ -x ${CURLBIN} ];then
+  CURLTEMP=$(mktemp -t jenkins_wrapper_curl.XXXXXXXX)
+  echo "<run><log encoding=\"hexBinary\">$(hexdump -v -e '1/1 "%02x"' $OUTFILE)</log><result>${RESULT}</result><duration>${ELAPSED_MS}</duration></run>" > $CURLTEMP
+  #
+  if [ -n "${USER}" -a -n "${PASS}" ];then
+      curl -u ${USER}:${PASS} -X POST -d @${CURLTEMP} ${JENKINS_URL}/job/${JOB_NAME}/postBuildResult
+  else
+      curl -X POST -d @${CURLTEMP} ${JENKINS_URL}/job/${JOB_NAME}/postBuildResult
+  fi
 else
-    curl -X POST -d @${CURLTEMP} ${JENKINS_URL}/job/${JOB_NAME}/postBuildResult
+  wget -q --post-data="<run><log encoding=\"hexBinary\">$(hexdump -v -e '1/1 "%02x"' $OUTFILE)</log><result>${RESULT}</result><duration>${ELAPSED_MS}</duration></run>" ${JENKINS_URL}/job/${JOB_NAME}/postBuildResult
 fi
 
 ### Clean up our temp files and we're done.
