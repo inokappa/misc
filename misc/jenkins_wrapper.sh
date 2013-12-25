@@ -1,20 +1,5 @@
 #!/bin/sh
 #
-#-----------------------------------------------------------------------------
-# Jenkinsサーバへローカルホスト内のジョブやスクリプトの実行結果を通知するための
-# ラッパースクリプトです。
-#
-# 必要なツール: curl (wgetのようなコマンドラインインタフェース)
-# 事前Jenkinsにのサーバに、通知専用のプロジェクトを作る必要があります。
-# また、プロジェクトは匿名アクセス可能にしないといけません。非公開の場合は、
-# curlのオプションで、-u userid:password を渡すように修正してください。
-#
-# Jenkinsへの外部ジョブ登録用フォーマットは、XML形式です。
-# Ref. http://wiki.jenkins-ci.org/display/JA/Monitoring+external+jobs
-# 
-#-----------------------------------------------------------------------------
-#
-#
 # Wrapper for sending the results of an arbitrary script to Jenkins for
 # monitoring. 
 #
@@ -67,7 +52,7 @@ echo "Elapsed ms: $ELAPSED_MS" >> $OUTFILE
 # too long' issues.
 
 CURLBIN=`which curl`
-if [ -x ${CURLBIN} ];then
+if [ ! -n ${CURLBIN} ];then
   CURLTEMP=$(mktemp -t jenkins_wrapper_curl.XXXXXXXX)
   echo "<run><log encoding=\"hexBinary\">$(hexdump -v -e '1/1 "%02x"' $OUTFILE)</log><result>${RESULT}</result><duration>${ELAPSED_MS}</duration></run>" > $CURLTEMP
   #
