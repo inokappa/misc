@@ -52,7 +52,7 @@ echo "Elapsed ms: $ELAPSED_MS" >> $OUTFILE
 # too long' issues.
 
 CURLBIN=`which curl`
-if [ ! -n ${CURLBIN} ];then
+if [ -n "${CURLBIN}" ];then
   CURLTEMP=$(mktemp -t jenkins_wrapper_curl.XXXXXXXX)
   echo "<run><log encoding=\"hexBinary\">$(hexdump -v -e '1/1 "%02x"' $OUTFILE)</log><result>${RESULT}</result><duration>${ELAPSED_MS}</duration></run>" > $CURLTEMP
   #
@@ -61,12 +61,11 @@ if [ ! -n ${CURLBIN} ];then
   else
       curl -X POST -d @${CURLTEMP} ${JENKINS_URL}/job/${JOB_NAME}/postBuildResult
   fi
+  ### Clean up our temp files and we're done.
+  rm $CURLTEMP
 else
-  wget -q --post-data="<run><log encoding=\"hexBinary\">$(hexdump -v -e '1/1 "%02x"' $OUTFILE)</log><result>${RESULT}</result><duration>${ELAPSED_MS}</duration></run>" ${JENKINS_URL}/job/${JOB_NAME}/postBuildResult
+  wget -O /dev/null --quiet --post-data="<run><log encoding=\"hexBinary\">$(hexdump -v -e '1/1 "%02x"' $OUTFILE)</log><result>${RESULT}</result><duration>${ELAPSED_MS}</duration></run>" ${JENKINS_URL}/job/${JOB_NAME}/postBuildResult
 fi
 
 ### Clean up our temp files and we're done.
-
-rm $CURLTEMP
 rm $OUTFILE
-
